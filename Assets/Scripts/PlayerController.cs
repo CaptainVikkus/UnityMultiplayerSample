@@ -27,6 +27,6 @@ public class PlayerController : MonoBehaviour
             transform.position = new Vector3(xDirection * speed, 0, zDirection * speed);
         }
         //Quit on Escape Key
-        if (Input.GetKey(KeyCode.Escape)) { Application.Quit(); }
+        if (Input.GetKey(KeyCode.Escape)) { network.DisconnectClient(); Application.Quit(); }
     }
 }
