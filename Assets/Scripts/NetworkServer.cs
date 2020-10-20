@@ -103,6 +103,11 @@ public class NetworkServer : MonoBehaviour
                 ServerUpdateMsg suMsg = JsonUtility.FromJson<ServerUpdateMsg>(recMsg);
                 Debug.Log("Server update message received!");
                 break;
+            case Commands.PLAYER_DISCONNECT:
+                DisconnectMsg disMsg = JsonUtility.FromJson<DisconnectMsg>(recMsg);
+                Debug.Log("Player disconnect received!");
+                DisconnectPlayer(disMsg.serverID);
+                break;
             default:
                 Debug.Log("SERVER ERROR: Unrecognized message received!");
                 break;
@@ -123,13 +128,8 @@ public class NetworkServer : MonoBehaviour
         }
     }
 
-    void OnDisconnect(int connection){
-        //get the internal id
-        string id = m_Connections[connection].InternalId.ToString();
-        //delete the connection
-        Debug.Log("Client disconnected from server");
-        m_Connections[connection] = default(NetworkConnection);
-
+    void DisconnectPlayer(string id)
+    {
         //remove player with that id
         for (int i = 0; i < players.Count; i++)
         {
@@ -151,6 +151,17 @@ public class NetworkServer : MonoBehaviour
                 SendToClient(JsonUtility.ToJson(disconnect), m_Connections[i]);
             }
         }
+
+    }
+
+    void OnDisconnect(int connection){
+        //get the internal id
+        string id = m_Connections[connection].InternalId.ToString();
+        //delete the connection
+        Debug.Log("Client disconnected from server");
+        m_Connections[connection] = default(NetworkConnection);
+
+        DisconnectPlayer(id);
     }
 
     void Update ()

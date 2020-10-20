@@ -160,6 +160,13 @@ public class NetworkClient : MonoBehaviour
             Debug.Log("Player did not exist");
     }
 
+    public void DisconnectClient()
+    {
+        DisconnectMsg disconnect = new DisconnectMsg();
+        disconnect.serverID = localID;
+        SendToServer(JsonUtility.ToJson(disconnect));
+    }
+
     void Disconnect(){
         m_Connection.Disconnect(m_Driver);
         m_Connection = default(NetworkConnection);
