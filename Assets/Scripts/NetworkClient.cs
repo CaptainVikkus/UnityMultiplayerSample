@@ -152,6 +152,7 @@ public class NetworkClient : MonoBehaviour
         int found = FindPlayer(serverID);
         if (found != -1)
         {
+            Destroy(players[found]);
             players.RemoveAt(found);
             Debug.Log("Player Successfully Removed");
         }
