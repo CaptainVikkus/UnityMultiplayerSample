@@ -37,6 +37,7 @@ public class NetworkClient : MonoBehaviour
             {
                 //Update the position of local player on the server
                 var message = new PlayerUpdateMsg();
+                message.player.id = localID;
                 message.player.cubePos = players[found].transform.position;
                 SendToServer(JsonUtility.ToJson(message));
             }
@@ -90,6 +91,11 @@ public class NetworkClient : MonoBehaviour
                 Debug.Log("Server update message received!");
                 UpdateList(suMsg.players);
                 break;
+            case Commands.PLAYER_DISCONNECT:
+                DisconnectMsg disMsg = JsonUtility.FromJson<DisconnectMsg>(recMsg);
+                Debug.Log("Disconnection message received!: " + disMsg.serverID);
+                RemovePlayer(disMsg.serverID);
+                break;
             default:
                 Debug.Log("Unrecognized message received!");
                 break;
@@ -124,7 +130,8 @@ public class NetworkClient : MonoBehaviour
 
         return found;
     }
-        private void CreatePlayer(NetworkObjects.NetworkPlayer netPlayer)
+
+    private void CreatePlayer(NetworkObjects.NetworkPlayer netPlayer)
     {
         GameObject player = Instantiate(playerType);
         //Set ID and client controller
@@ -134,6 +141,18 @@ public class NetworkClient : MonoBehaviour
         player.transform.position = netPlayer.cubePos;
         players.Add(player);
         Debug.Log("Player Created: ID " + netPlayer.id);
+    }
+
+    private void RemovePlayer(string serverID)
+    {
+        int found = FindPlayer(serverID);
+        if (found != -1)
+        {
+            players.RemoveAt(found);
+            Debug.Log("Player Successfully Removed");
+        }
+        else
+            Debug.Log("Player did not exist");
     }
 
     void Disconnect(){

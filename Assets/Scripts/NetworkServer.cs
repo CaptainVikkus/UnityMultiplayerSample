@@ -75,9 +75,9 @@ public class NetworkServer : MonoBehaviour
         var player = new NetworkObjects.NetworkPlayer();
         player.id = c.InternalId.ToString();
         player.cubeColor = new Color(
-            UnityEngine.Random.Range(0, 1), 
-            UnityEngine.Random.Range(0, 1), 
-            UnityEngine.Random.Range(0, 1));
+            UnityEngine.Random.Range(0.0f, 1.0f),
+            UnityEngine.Random.Range(0.0f, 1.0f),
+            UnityEngine.Random.Range(0.0f, 1.0f));
         //Add to servers list
         //will be added to all clients on next update
         players.Add(player);
@@ -123,9 +123,34 @@ public class NetworkServer : MonoBehaviour
         }
     }
 
-    void OnDisconnect(int i){
+    void OnDisconnect(int connection){
+        //get the internal id
+        string id = m_Connections[connection].InternalId.ToString();
+        //delete the connection
         Debug.Log("Client disconnected from server");
-        m_Connections[i] = default(NetworkConnection);
+        m_Connections[connection] = default(NetworkConnection);
+
+        //remove player with that id
+        for (int i = 0; i < players.Count; i++)
+        {
+            if (players[i].id == id)
+            {
+                players.RemoveAt(i);
+                Debug.Log("Player Removed Succesfully: " + id);
+                break;
+            }
+        }
+
+        //send disconnected id to connected clients
+        for (int i = 0; i < m_Connections.Length; i++)
+        {
+            if (m_Connections[i].IsCreated)
+            {
+                DisconnectMsg disconnect = new DisconnectMsg();
+                disconnect.serverID = id;
+                SendToClient(JsonUtility.ToJson(disconnect), m_Connections[i]);
+            }
+        }
     }
 
     void Update ()

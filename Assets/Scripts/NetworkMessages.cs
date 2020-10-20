@@ -9,7 +9,8 @@ namespace NetworkMessages
         PLAYER_UPDATE,
         SERVER_UPDATE,
         HANDSHAKE,
-        PLAYER_INPUT
+        PLAYER_INPUT,
+        PLAYER_DISCONNECT
     }
 
     [System.Serializable]
@@ -33,6 +34,17 @@ namespace NetworkMessages
         public InitialMsg()
         {      // Constructor
             cmd = Commands.INITIALIZE;
+            serverID = "";
+        }
+    }
+
+    [System.Serializable]
+    public class DisconnectMsg : NetworkHeader
+    {
+        public string serverID;
+        public DisconnectMsg()
+        {      // Constructor
+            cmd = Commands.PLAYER_DISCONNECT;
             serverID = "";
         }
     }
