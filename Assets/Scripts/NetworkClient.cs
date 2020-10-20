@@ -47,7 +47,7 @@ public class NetworkClient : MonoBehaviour
                 Debug.Log("Error: No Local Player");
             }
 
-            yield return new WaitForSeconds(0.5f);
+            yield return new WaitForSeconds(1/30.0f);
         }
     }
 

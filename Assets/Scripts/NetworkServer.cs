@@ -46,7 +46,7 @@ public class NetworkServer : MonoBehaviour
                 SendToClient(JsonUtility.ToJson(update), m_Connections[i]);
             }
             Debug.Log("Update Sent to Clients");
-            yield return new WaitForSeconds(1);
+            yield return new WaitForSeconds(1/15.0f);
         }
     }
 
