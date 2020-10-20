@@ -39,6 +39,7 @@ public class NetworkClient : MonoBehaviour
                 var message = new PlayerUpdateMsg();
                 message.player.id = localID;
                 message.player.cubePos = players[found].transform.position;
+                message.player.cubeColor = players[found].GetComponent<Renderer>().material.GetColor("_Color");
                 SendToServer(JsonUtility.ToJson(message));
             }
             else
@@ -112,7 +113,10 @@ public class NetworkClient : MonoBehaviour
                 CreatePlayer(_players[i]);
             //Existing Player
             else
+            {
                 players[found].transform.position = _players[i].cubePos;
+                players[found].GetComponent<Renderer>().material.SetColor("_Color", _players[i].cubeColor);
+            }
         }
     }
 
