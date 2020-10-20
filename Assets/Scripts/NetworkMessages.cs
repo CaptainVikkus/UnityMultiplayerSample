@@ -5,6 +5,7 @@ using UnityEngine;
 namespace NetworkMessages
 {
     public enum Commands{
+        INITIALIZE,
         PLAYER_UPDATE,
         SERVER_UPDATE,
         HANDSHAKE,
@@ -24,7 +25,18 @@ namespace NetworkMessages
             player = new NetworkObjects.NetworkPlayer();
         }
     }
-    
+
+    [System.Serializable]
+    public class InitialMsg : NetworkHeader
+    {
+        public string serverID;
+        public InitialMsg()
+        {      // Constructor
+            cmd = Commands.INITIALIZE;
+            serverID = "";
+        }
+    }
+
     [System.Serializable]
     public class PlayerUpdateMsg:NetworkHeader{
         public NetworkObjects.NetworkPlayer player;
@@ -60,7 +72,7 @@ namespace NetworkObjects
     [System.Serializable]
     public class NetworkPlayer : NetworkObject{
         public Color cubeColor;
-        public Vector3 cubPos;
+        public Vector3 cubePos;
 
         public NetworkPlayer(){
             cubeColor = new Color();

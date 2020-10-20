@@ -5,12 +5,16 @@ using Unity.Networking.Transport;
 using NetworkMessages;
 using System;
 using System.Text;
+using System.Collections.Generic;
+using NetworkObjects;
 
 public class NetworkServer : MonoBehaviour
 {
     public NetworkDriver m_Driver;
     public ushort serverPort;
     private NativeList<NetworkConnection> m_Connections;
+    private List<NetworkObjects.NetworkPlayer> players =
+        new List<NetworkObjects.NetworkPlayer>();
 
     void Start ()
     {
@@ -23,6 +27,27 @@ public class NetworkServer : MonoBehaviour
             m_Driver.Listen();
 
         m_Connections = new NativeList<NetworkConnection>(16, Allocator.Persistent);
+
+        StartCoroutine(ServerUpdate());
+    }
+
+    System.Collections.IEnumerator ServerUpdate()
+    {
+        while (this.isActiveAndEnabled)
+        {
+            //Create message with list of all players
+            ServerUpdateMsg update = new ServerUpdateMsg();
+            update.players = players;
+            for (int i = 0; i < m_Connections.Length; i++)
+            {
+                if (!m_Connections[i].IsCreated)
+                    continue;
+                //Send List of players to client
+                SendToClient(JsonUtility.ToJson(update), m_Connections[i]);
+            }
+            Debug.Log("Update Sent to Clients");
+            yield return new WaitForSeconds(1);
+        }
     }
 
     void SendToClient(string message, NetworkConnection c){
@@ -41,10 +66,21 @@ public class NetworkServer : MonoBehaviour
         m_Connections.Add(c);
         Debug.Log("Accepted a connection");
 
-        //// Example to send a handshake message:
-        // HandshakeMsg m = new HandshakeMsg();
-        // m.player.id = c.InternalId.ToString();
-        // SendToClient(JsonUtility.ToJson(m),c);        
+        //Send initial Message to client
+        InitialMsg m = new InitialMsg();
+        m.serverID = c.InternalId.ToString();
+        SendToClient(JsonUtility.ToJson(m), c);
+
+        //Build new player
+        var player = new NetworkObjects.NetworkPlayer();
+        player.id = c.InternalId.ToString();
+        player.cubeColor = new Color(
+            UnityEngine.Random.Range(0, 1), 
+            UnityEngine.Random.Range(0, 1), 
+            UnityEngine.Random.Range(0, 1));
+        //Add to servers list
+        //will be added to all clients on next update
+        players.Add(player);
     }
 
     void OnData(DataStreamReader stream, int i){
@@ -55,20 +91,35 @@ public class NetworkServer : MonoBehaviour
 
         switch(header.cmd){
             case Commands.HANDSHAKE:
-            HandshakeMsg hsMsg = JsonUtility.FromJson<HandshakeMsg>(recMsg);
-            Debug.Log("Handshake message received!");
-            break;
+                HandshakeMsg hsMsg = JsonUtility.FromJson<HandshakeMsg>(recMsg);
+                Debug.Log("Handshake message received!: " + hsMsg.player.id);
+                break;
             case Commands.PLAYER_UPDATE:
-            PlayerUpdateMsg puMsg = JsonUtility.FromJson<PlayerUpdateMsg>(recMsg);
-            Debug.Log("Player update message received!");
-            break;
+                PlayerUpdateMsg puMsg = JsonUtility.FromJson<PlayerUpdateMsg>(recMsg);
+                Debug.Log("Player update message received!");
+                UpdatePlayer(puMsg.player);
+                break;
             case Commands.SERVER_UPDATE:
-            ServerUpdateMsg suMsg = JsonUtility.FromJson<ServerUpdateMsg>(recMsg);
-            Debug.Log("Server update message received!");
-            break;
+                ServerUpdateMsg suMsg = JsonUtility.FromJson<ServerUpdateMsg>(recMsg);
+                Debug.Log("Server update message received!");
+                break;
             default:
-            Debug.Log("SERVER ERROR: Unrecognized message received!");
-            break;
+                Debug.Log("SERVER ERROR: Unrecognized message received!");
+                break;
+        }
+    }
+
+    private void UpdatePlayer(NetworkObjects.NetworkPlayer client)
+    {
+        //Find client in players list
+        for (int i = 0; i < players.Count; i++)
+        {
+            if (players[i].id == client.id)
+            {
+                players[i] = client;
+                Debug.Log("Player Updated Succesfully: " + client.id);
+                break;
+            }
         }
     }
 
@@ -86,7 +137,6 @@ public class NetworkServer : MonoBehaviour
         {
             if (!m_Connections[i].IsCreated)
             {
-
                 m_Connections.RemoveAtSwapBack(i);
                 --i;
             }
@@ -101,7 +151,6 @@ public class NetworkServer : MonoBehaviour
             // Check if there is another new connection
             c = m_Driver.Accept();
         }
-
 
         // Read Incoming Messages
         DataStreamReader stream;
